@@ -1,7 +1,8 @@
 ----
 **Take Note!**
-- This version of the Hosts file generator, and tests, are for Python 3.5+ only.
-- With the exception of issues and PRs regarding changes to `hosts/data/StevenBlack/hosts`, all other issues regarding the content of the produced hosts files should be made with the appropriate data source that contributed the content in question. The contact information for all of the data sources can be found in the `hosts/data/` directory.
+
+* This version of the Hosts file generator, and tests, are for Python 3.5+ only.
+* With the exception of issues and PRs regarding changes to `hosts/data/StevenBlack/hosts`, all other issues regarding the content of the produced hosts files should be made with the appropriate data source that contributed the content in question. The contact information for all of the data sources can be found in the `hosts/data/` directory.
 ----
 
 ![Logo](https://raw.githubusercontent.com/StevenBlack/hosts/master/.github/logo.png)
@@ -10,7 +11,7 @@
 [![license](https://img.shields.io/github/license/StevenBlack/hosts.svg)](https://github.com/StevenBlack/hosts/blob/master/license.txt)
 [![repo size](https://img.shields.io/github/repo-size/StevenBlack/hosts.svg)](https://github.com/StevenBlack/hosts)
 [![contributors](https://img.shields.io/github/contributors/StevenBlack/hosts.svg)](https://github.com/StevenBlack/hosts/graphs/contributors)
-[![Build Status](https://img.shields.io/travis/StevenBlack/hosts/master.svg)](https://travis-ci.org/StevenBlack/hosts)
+[![Build Status](https://img.shields.io/github/workflow/status/StevenBlack/hosts/CI/master)](https://github.com/StevenBlack/hosts/actions?workflow=CI)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black)
 [![commits since last release](https://img.shields.io/github/commits-since/StevenBlack/hosts/latest.svg)](https://github.com/StevenBlack/hosts/commits/master)
 [![last commit](https://img.shields.io/github/last-commit/StevenBlack/hosts.svg)](https://github.com/StevenBlack/hosts/commits/master)
@@ -62,7 +63,28 @@ folder tree, where you will find the data for `fakenews`, `social`, `gambling`, 
 
 ## Generate your own unified hosts file
 
-To generate your own unified hosts file you will need Python 3.5 or later.
+You have two options to generate your own hosts file.  You can do it in your own environment, or within a Docker container.  We'll cover Docker first because it's a short section.
+
+### Option 1: Generate in a Docker container
+
+We provide a [Dockerfile](https://github.com/StevenBlack/hosts/blob/master/Dockerfile) that you can use to create a Docker container with everything you need.
+The container will contain Python 3 and all its dependency requirements, and a copy of the latest version of this repository.
+
+Build the Docker container like this:
+
+```
+docker build ./
+```
+
+Access the terminal like this:
+
+```
+docker run -it (containerid) bash
+```
+
+### Option 2: Generate it in your own environment.
+
+To generate your own amalgamated hosts files you will need Python 3.5 or later.
 
 First, install the dependencies with:
 
@@ -72,7 +94,9 @@ pip3 install --user -r requirements.txt
 
 **Note** we recommend the `--user` flag which installs the required dependencies at the user level. More information about it can be found on pip [documentation](https://pip.pypa.io/en/stable/reference/pip_install/?highlight=--user#cmdoption-user).
 
-To run unit tests, in the top-level directory, run:
+### Common steps regardless of your development environment.
+
+To **run unit tests**, in the top-level directory, run:
 
 ```sh
 python3 testUpdateHostsFile.py
@@ -82,10 +106,6 @@ The `updateHostsFile.py` script will generate a unified hosts file based on the 
 local `data/` subfolder.  The script will prompt you whether it should fetch updated versions
 (from locations defined by the `update.json` text file in each source's folder). Otherwise, it
 will use the `hosts` file that's already there.
-
-### Usage
-
-#### Using Python 3:
 
 ```sh
 python3 updateHostsFile.py [--auto] [--replace] [--ip nnn.nnn.nnn.nnn] [--extensions ext1 ext2 ext3]
@@ -152,6 +172,23 @@ in hosts format to the generated hosts file.
 `--whitelist <whitelistfile>`, or `-w <whitelistfile>`: Use the given whitelist file
 to remove hosts from the generated hosts file.
 
+#### Using NixOS:
+
+To install hosts file on your machine add the following into your `configuration.nix`:
+
+```nix
+{
+  networking.extraHosts = let
+    hostsPath = https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts;
+    hostsFile = builtins.fetchurl hostsPath;
+  in builtins.readFile "${hostsFile}";
+}
+```
+
+* NOTE: Change `hostsPath` if you need other versions of hosts file.
+* NOTE: The call to `fetchurl` is impure.
+Use `fetchFromGitHub` with the exact commit if you want to always get the same result.
+
 
 ## How do I control which sources are unified?
 
@@ -199,8 +236,7 @@ If you discover sketchy domains you feel should be included here, here are some 
 
 The best way to get new domains included is to submit an issue to any of the data providers whose home pages are [listed here](https://github.com/StevenBlack/hosts#sources-of-hosts-data-unified-in-this-variant). This is best because once you submit new domains, they will be curated and updated by the dedicated folks who maintain these sources.
 
-
-### Option 2: add your domains to Steven Black's personal data file
+### Option 2: Fork this repository, add your domains to Steven Black's personal data file, and submit a pull request
 
 Fork this hosts this repo and add your links to [https://github.com/StevenBlack/hosts/blob/master/data/StevenBlack/hosts](https://github.com/StevenBlack/hosts/blob/master/data/StevenBlack/hosts).
 
@@ -314,13 +350,6 @@ Open a command prompt with administrator privileges and run this command:
 ipconfig /flushdns
 ```
 
-Before flushing the DNS cache, open a command prompt with administrator privileges and run this command:
-
-```bat
-sc config "Dnscache" start=disabled
-sc stop "Dnscache"
-```
-
 ### Linux
 
 Open a Terminal and run with root privileges:
@@ -398,6 +427,8 @@ devices under a variety of operating systems.
 * [ViHoMa](https://github.com/cmabad/ViHoMa) is a Visual Hosts file Manager, written in Java, by Christian Martínez.  Check it out!
 
 ## Interesting Applications
+
+* [Maza ad blocking](https://github.com/tanrax/maza-ad-blocking) is a bash script that automatically updates host file. You can also update a fresh copy. And each time it generates a dnsmasq-compatible configuration file. Fast installation, compatible with MacOS, Linux and BSD.
 
 * [Hostile](https://github.com/feross/hostile) is a nifty command line utility to easily add or remove domains from your hosts file.  If our hosts files are too aggressive for you, you can use `hostile` to remove domains, or you can use `hostile` in a bash script to automate a post process each time you download fresh versions of hosts.
 
